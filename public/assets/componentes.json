@@ -1,7 +1,6 @@
 {
   "pump_casing": {
     "label": "Carcaça da Bomba",
-<<<<<<< HEAD
     "en": "Pump Casing",
     "desc": "Corpo principal da bomba centrífuga em ferro fundido GG-25. Forma a voluta espiral que converte energia cinética do fluido em pressão estática.",
     "funcao": "Alojar o rotor e converter a velocidade do fluido em pressão de trabalho.",
@@ -30,32 +29,10 @@
     "ferramenta": "Chave de boca 17mm — parafusos perimetrais",
     "intervalo": "Inspecionar vedação a cada 4.000h. Verificar desgaste interno a cada revisão geral.",
     "grupo": "hidraulico"
-=======
-    "en": "Centrifugal Pump Casing",
-    "desc": "Corpo principal da bomba centrífuga. Aloja o rotor e forma a voluta que converte energia cinética em pressão estática.",
-    "funcao": "Direcionar o fluxo do fluido e converter velocidade em pressão.",
-    "material": "Ferro fundido GG-25",
-    "torque": "—",
-    "ordem": 1,
-    "grupo": "hidraulico",
-    "interactive": true
-  },
-  "pump_coupling": {
-    "label": "Acoplamento da Bomba",
-    "en": "Pump Coupling",
-    "desc": "Metade do acoplamento no lado da bomba. Fixada ao eixo por chaveta e porca de travamento.",
-    "funcao": "Conectar o eixo da bomba ao elemento de transmissão de torque.",
-    "material": "Aço 1045",
-    "torque": "40 N·m",
-    "ordem": 2,
-    "grupo": "transmissao",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "house_bearing": {
     "label": "Mancal",
     "en": "House Bearing",
-<<<<<<< HEAD
     "desc": "Carcaça de suporte dos rolamentos de esferas. Lubrificação por banho de óleo ISO VG 68. Capacidade: 0,5 litro.",
     "funcao": "Suportar cargas radiais e axiais do eixo em rotação a 1750 RPM.",
     "material": "Ferro fundido cinzento FC-200",
@@ -71,20 +48,10 @@
       "metallic": 0.6,
       "roughness": 0.5
     }
-=======
-    "desc": "Carcaça que suporta os rolamentos e mantém o eixo alinhado. Lubrificação por banho de óleo.",
-    "funcao": "Suportar cargas radiais e axiais do eixo em rotação.",
-    "material": "Ferro fundido cinzento",
-    "torque": "—",
-    "ordem": 3,
-    "grupo": "mancal",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "pump_impeller": {
     "label": "Rotor da Bomba",
     "en": "Pump Impeller",
-<<<<<<< HEAD
     "desc": "Rotor de pás retroinclinadas em aço inox. Diâmetro nominal 285mm. Rotação 1750 RPM. Balanceamento dinâmico grau G2.5.",
     "funcao": "Transferir energia mecânica ao fluido por força centrífuga, gerando fluxo e pressão.",
     "material": "Aço inox AISI 316",
@@ -100,20 +67,10 @@
       "metallic": 0.95,
       "roughness": 0.15
     }
-=======
-    "desc": "Peça rotativa central com pás curvas. Transfere energia mecânica ao fluido através da força centrífuga.",
-    "funcao": "Acelerar o fluido radialmente, gerando fluxo e pressão.",
-    "material": "Aço inox AISI 316",
-    "torque": "—",
-    "ordem": 4,
-    "grupo": "hidraulico",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "shaft": {
     "label": "Eixo",
     "en": "Shaft",
-<<<<<<< HEAD
     "desc": "Eixo em aço retificado com canaleta de chaveta. Diâmetro Ø35mm na zona de vedação. Rugosidade Ra ≤ 0,8μm na região da gaxeta.",
     "funcao": "Transmitir torque do motor ao rotor e suportar cargas de flexão.",
     "material": "Aço SAE 1045 retificado",
@@ -149,31 +106,10 @@
       "metallic": 0.3,
       "roughness": 0.7
     }
-=======
-    "desc": "Transmite torque do motor ao rotor. Fabricado em aço retificado com alta resistência à torção e flexão.",
-    "funcao": "Transmitir o movimento rotativo do motor ao rotor da bomba.",
-    "material": "Aço 1045 retificado",
-    "torque": "—",
-    "ordem": 5,
-    "grupo": "transmissao",
-    "interactive": true
-  },
-  "support": {
-    "label": "Base de Suporte",
-    "en": "Base Pump / Support",
-    "desc": "Estrutura de aço soldada que suporta e alinha a bomba e o motor. Fixada ao piso com chumbadores.",
-    "funcao": "Suportar e alinhar todos os componentes do conjunto moto-bomba.",
-    "material": "Aço estrutural",
-    "torque": "—",
-    "ordem": 6,
-    "grupo": "estrutura",
-    "interactive": false
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "seal_chamber": {
     "label": "Câmara de Selagem",
     "en": "Seal Chamber",
-<<<<<<< HEAD
     "desc": "Câmara pressurizada que aloja o sistema de vedação por gaxeta. Permite injeção de líquido de barreira para refrigeração e lubrificação.",
     "funcao": "Conter o fluido de processo e refrigerar o sistema de vedação.",
     "material": "Ferro fundido / Aço inox AISI 304",
@@ -189,20 +125,10 @@
       "metallic": 0.7,
       "roughness": 0.35
     }
-=======
-    "desc": "Aloja o sistema de vedação e permite injeção de líquido de barreira para refrigeração do selo.",
-    "funcao": "Conter e refrigerar o sistema de vedação do eixo.",
-    "material": "Ferro fundido / Aço inox",
-    "torque": "—",
-    "ordem": 7,
-    "grupo": "vedacao",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "pump_lantern_ring": {
     "label": "Anel Lanterna",
     "en": "Pump Lantern Ring",
-<<<<<<< HEAD
     "desc": "Anel distribuidor em bronze que posiciona a injeção de líquido de barreira centralmente ao redor do eixo, garantindo refrigeração uniforme.",
     "funcao": "Distribuir líquido de barreira e refrigerar a região central das gaxetas.",
     "material": "Bronze TM23 (Cu-Sn)",
@@ -218,20 +144,10 @@
       "metallic": 0.85,
       "roughness": 0.25
     }
-=======
-    "desc": "Distribui o líquido de barreira uniformemente ao redor do eixo dentro da câmara de vedação.",
-    "funcao": "Distribuir e refrigerar a área de vedação do eixo.",
-    "material": "Bronze",
-    "torque": "—",
-    "ordem": 8,
-    "grupo": "vedacao",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "pump_packing_set": {
     "label": "Conjunto de Gaxetas",
     "en": "Pump Packing Set",
-<<<<<<< HEAD
     "desc": "4 anéis de gaxeta trançada em PTFE com núcleo de grafite. Corte em ângulo 45°. Dimensão: Ø35×Ø55×12mm.",
     "funcao": "Vedar o eixo rotativo impedindo vazamento do fluido bombeado.",
     "material": "PTFE / Grafite expandido",
@@ -247,20 +163,10 @@
       "metallic": 0.1,
       "roughness": 0.9
     }
-=======
-    "desc": "Anéis de material macio que vedam o eixo por compressão. Substituição periódica obrigatória conforme manual.",
-    "funcao": "Vedar a passagem do fluido pelo eixo da bomba.",
-    "material": "PTFE / Grafite",
-    "torque": "—",
-    "ordem": 9,
-    "grupo": "vedacao",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "pump_packing_gland": {
     "label": "Prensa-gaxeta",
     "en": "Pump Packing Gland",
-<<<<<<< HEAD
     "desc": "Flangia de compressão em bronze que pressiona axialmente o conjunto de gaxetas. Ajuste fino pelo aperto controlado dos parafusos.",
     "funcao": "Comprimir as gaxetas radialmente contra o eixo para controlar a vedação.",
     "material": "Bronze TM23",
@@ -276,20 +182,10 @@
       "metallic": 0.85,
       "roughness": 0.3
     }
-=======
-    "desc": "Comprime o conjunto de gaxetas contra o eixo para controlar a vedação. Ajuste feito com chave de boca.",
-    "funcao": "Comprimir e ajustar a vedação de gaxetas no eixo.",
-    "material": "Bronze / Aço inox",
-    "torque": "25 N·m",
-    "ordem": 10,
-    "grupo": "vedacao",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "wear_ring": {
     "label": "Anel de Desgaste",
     "en": "Wear Ring",
-<<<<<<< HEAD
     "desc": "Anel de folga controlada entre rotor e carcaça. Folga nominal: 0,35-0,40mm. Quando desgastado, a folga aumenta e a eficiência cai.",
     "funcao": "Minimizar recirculação interna e proteger rotor e carcaça do contato direto.",
     "material": "Bronze fosforoso / Ferro fundido",
@@ -305,20 +201,10 @@
       "metallic": 0.85,
       "roughness": 0.3
     }
-=======
-    "desc": "Peça de sacrifício que controla a folga entre rotor e carcaça, reduzindo a recirculação interna do fluido.",
-    "funcao": "Minimizar recirculação e proteger rotor e carcaça do desgaste.",
-    "material": "Bronze / Ferro fundido",
-    "torque": "—",
-    "ordem": 11,
-    "grupo": "hidraulico",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "pump_protection": {
     "label": "Proteção da Bomba",
     "en": "Pump Protection",
-<<<<<<< HEAD
     "desc": "Guarda de segurança em chapa de aço sobre o acoplamento. Obrigatória pela NR-12. Fixação por parafusos recartilhados sem necessidade de ferramentas.",
     "funcao": "Proteger operadores do contato acidental com partes girantes.",
     "material": "Chapa de aço #14 / pintura epóxi",
@@ -346,31 +232,10 @@
     "ferramenta": "Chave de boca 17mm — parafusos perimetrais",
     "intervalo": "Inspecionar vedação a cada 4.000h. Verificar desgaste interno a cada revisão geral.",
     "grupo": "hidraulico"
-=======
-    "desc": "Guarda de segurança NR-12 sobre partes girantes. Remoção obrigatória antes de qualquer manutenção.",
-    "funcao": "Proteger operadores de contato com partes em movimento.",
-    "material": "Chapa de aço",
-    "torque": "—",
-    "ordem": 12,
-    "grupo": "estrutura",
-    "interactive": true
-  },
-  "coupling": {
-    "label": "Acoplamento",
-    "en": "Drive Coupling",
-    "desc": "Acoplamento elástico de mandíbulas que conecta eixo da bomba ao motor. Absorve vibrações e desalinhamentos.",
-    "funcao": "Transmitir torque do motor à bomba absorvendo vibrações.",
-    "material": "Aço / Elastômero",
-    "torque": "45 N·m",
-    "ordem": 13,
-    "grupo": "transmissao",
-    "interactive": true
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
   },
   "bearing_cover": {
     "label": "Tampa do Rolamento",
     "en": "Bearing Cover",
-<<<<<<< HEAD
     "desc": "Tampa lateral do mancal com vedação por anel O-ring. Retém o lubrificante e impede entrada de contaminantes externos.",
     "funcao": "Fechar o mancal lateralmente, retendo óleo e protegendo os rolamentos.",
     "material": "Ferro fundido FC-150",
@@ -514,25 +379,3 @@
     "grupo": "hidraulico"
   }
 }
-=======
-    "desc": "Fecha o mancal lateralmente, retendo o lubrificante e protegendo os rolamentos de contaminação externa.",
-    "funcao": "Proteger rolamentos e reter lubrificante no mancal.",
-    "material": "Ferro fundido",
-    "torque": "30 N·m",
-    "ordem": 14,
-    "grupo": "mancal",
-    "interactive": true
-  },
-  "motor_body": {
-    "label": "Motor Elétrico",
-    "en": "Motor",
-    "desc": "Motor elétrico CA trifásico 7,5 kW / 4 pólos / 1750 RPM. Grau de proteção IP55. Classe de isolamento F.",
-    "funcao": "Converter energia elétrica em energia mecânica rotativa.",
-    "material": "Alumínio / Ferro fundido",
-    "torque": "—",
-    "ordem": 15,
-    "grupo": "motor",
-    "interactive": true
-  }
-}
->>>>>>> 714a245c74b4652dca72e3e4169536733fc3f1bc
