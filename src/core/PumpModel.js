@@ -26,7 +26,7 @@ export class PumpModel {
 
     // Criar nó raiz para agrupar toda a bomba
     this.rootNode = new BABYLON.TransformNode('bomba_root', this.scene)
-    this.rootNode.position = new BABYLON.Vector3(0, 0.5, 0)
+    this.rootNode.position = new BABYLON.Vector3(0, 0.0, 0)
     // Rotação: -90° em X coloca a bomba na horizontal (eixo ao longo de Z)
     // Inventor: eixo da bomba em X, exportado com Z=up pelo FreeCAD
     // X:-90 corrige Z-up→Y-up, Y:+90 gira para ficar de frente

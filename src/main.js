@@ -112,14 +112,6 @@ async function init() {
     hud.init()
 
     // Conectar selecao ao painel de info
-    const origSelect = interaction.select.bind(interaction)
-    interaction.select = (key) => {
-      origSelect(key)
-      hud?.showPartInfo(key)
-      // Painel acompanha câmera — atualizar posição do painel no espaço de tela
-      _updateInfoPanelPos(sceneManager, pumpModel, key)
-    }
-
     // Atualizar posição do painel de info a cada frame da câmera
     sceneManager.scene.registerAfterRender(() => {
       const panel = document.getElementById('info-panel')
@@ -132,6 +124,18 @@ async function init() {
     setProgress(94)
     const vrUI = new VRUIManager(sceneManager.scene, assembly, pumpModel)
     vrUI.init()
+
+    // Conectar VRUIManager ao XRManager — permite callbacks ao entrar/sair VR
+    xr.vrUI = vrUI
+
+    // Mostrar info VR quando peça é selecionada
+    const origSelectVR = interaction.select.bind(interaction)
+    interaction.select = (key) => {
+      origSelectVR(key)
+      hud?.showPartInfo(key)
+      if (xr.inXR) vrUI.showPartInfoVR(key)
+      _updateInfoPanelPos(sceneManager, pumpModel, key)
+    }
 
     // Snap com feedback completo
     const origSnap = assembly.trySnap.bind(assembly)
@@ -169,9 +173,9 @@ function _extraToolbar(anim) {
     b.className='tool-btn'; b.title=title; b.textContent=ico
     b.addEventListener('click', fn); tb.appendChild(b)
   }
-  mk('🎬','Cinematica de desmontagem', () => anim.playDisassembly())
-  mk('💧','Fluxo de liquido', () => anim._flowParticles ? anim.stopFlow() : anim.startFlow())
-  mk('🔄','Showcase 360', () => anim.playShowcase())
+  mk('🎬','Cinemática de desmontagem', () => anim.playDisassembly())
+  mk('💧','Fluxo de líquido',          () => anim._flowParticles ? anim.stopFlow() : anim.startFlow())
+  mk('🔄','Showcase 360°',             () => anim.playShowcase())
 }
 
 init()

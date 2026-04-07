@@ -10,9 +10,10 @@
   },
   "dependencies": {
     "@babylonjs/core": "^7.0.0",
-    "@babylonjs/loaders": "^7.0.0",
     "@babylonjs/gui": "^7.0.0",
-    "@babylonjs/materials": "^7.0.0"
+    "@babylonjs/loaders": "^7.0.0",
+    "@babylonjs/materials": "^7.0.0",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "vite": "^5.0.0"

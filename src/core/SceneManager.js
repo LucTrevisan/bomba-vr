@@ -53,7 +53,6 @@ export class SceneManager {
     this._setupLighting()
 
     // ── Grade de chão ────────────────────────────────────────────────────────
-    this._buildGrid()
 
     // ── Post-processing ──────────────────────────────────────────────────────
     this._setupPostProcessing()
@@ -114,6 +113,7 @@ export class SceneManager {
           mat.emissiveColor   = BABYLON.Color3.White()
 
           console.log('✅ Ambiente 360° carregado — 2000x1000px')
+
           resolve()
         },
         (msg) => {
@@ -156,19 +156,11 @@ export class SceneManager {
     this.shadowGenerator.useBlurExponentialShadowMap = true
     this.shadowGenerator.blurKernel = 8
     this.scene._shadowGenerator     = this.shadowGenerator
+
+    // Chão invisível que só recebe sombra
   }
 
-  _buildGrid() {
-    const lines = []
-    for (let i = -10; i <= 10; i++) {
-      lines.push([new BABYLON.Vector3(i*1.0,-2.5,-10), new BABYLON.Vector3(i*1.0,-2.5,10)])
-      lines.push([new BABYLON.Vector3(-10,-2.5,i*1.0), new BABYLON.Vector3(10,-2.5,i*1.0)])
-    }
-    const grid = BABYLON.MeshBuilder.CreateLineSystem('grid', { lines }, this.scene)
-    grid.color      = new BABYLON.Color3(0.3, 0.4, 0.5)
-    grid.alpha      = 0.20
-    grid.isPickable = false
-  }
+
 
   _setupPostProcessing() {
     // Post-processing leve — compatível com Meta Quest
