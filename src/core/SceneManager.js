@@ -102,7 +102,7 @@ export class SceneManager {
         () => {
           // ── onLoad ──────────────────────────────────────────────────────
           clearTimeout(timeout)
-          tex.uScale = 1   // inverter horizontal (necessário para 360°)
+          tex.uScale =  1   // sem inversão — imagem já está na orientação correta
           tex.vScale =  1
           tex.wrapU  = BABYLON.Texture.WRAP_ADDRESSMODE
           tex.wrapV  = BABYLON.Texture.CLAMP_ADDRESSMODE
