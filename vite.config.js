@@ -3,8 +3,8 @@ import { defineConfig } from 'vite'
 export default defineConfig(({ command }) => {
   const isCloudflare = process.env.DEPLOY_TARGET === 'cloudflare'
   const base = command === 'build'
-    ? (isCloudflare ? '/' : '/bomba-vr/')
-    : '/'
+    ? (isCloudflare ? './' : '/bomba-vr/')
+        : '/'
 
   return {
     base,
