@@ -1,13 +1,8 @@
 /**
- * XRManager v3 — WebXR com hand tracking completo para Meta Quest
- * - Raycast nos painéis VR
- * - Pinch para selecionar e mover peças
- * - Callbacks para VRUIManager
+ * XRManager v5 — Usando sistema nativo do Babylon para UI VR
+ * Botões funcionam com controladores E mãos via WebXR pointer events
  */
 import * as BABYLON from '@babylonjs/core'
-
-const PINCH_ON  = 0.025  // distância para ativar pinch
-const PINCH_OFF = 0.055  // distância para soltar pinch
 
 export class XRManager {
   constructor(scene, interaction, assembly) {
@@ -15,8 +10,11 @@ export class XRManager {
     this.interaction = interaction
     this.assembly    = assembly
     this.xrHelper    = null
-    this.vrUI        = null   // referência ao VRUIManager (definida em main.js)
+    this.vrUI        = null
     this.inXR        = false
+    this._grabState  = { key: null, offset: null, hand: null }
+    this._pinchL     = false
+    this._pinchR     = false
   }
 
   async init() {
@@ -30,6 +28,7 @@ export class XRManager {
     }
 
     try {
+      // Criar experiência XR com pointer selection nativo
       this.xrHelper = await this.scene.createDefaultXRExperienceAsync({
         floorMeshes:      [],
         optionalFeatures: true,
@@ -37,13 +36,29 @@ export class XRManager {
           sessionMode:        'immersive-vr',
           referenceSpaceType: 'local-floor',
         },
+        inputOptions: {
+          doNotLoadControllerMeshes: false,
+        }
       })
 
-      // Posição inicial
       this.xrHelper.baseExperience.camera.position =
         new BABYLON.Vector3(0, 1.6, -1.5)
 
-      // Hand tracking (Etapa C)
+      // ── POINTER SELECTION — faz botões VR funcionarem com controles ────
+      try {
+        const fm = this.xrHelper.baseExperience.featuresManager
+        const pointerSelection = fm.enableFeature(
+          BABYLON.WebXRFeatureName.POINTER_SELECTION, 'stable', {
+            xrInput:                    this.xrHelper.input,
+            enablePointerSelectionOnAllControllers: true,
+          }
+        )
+        console.log('✅ Pointer Selection ativado — botões VR funcionam')
+      } catch (e) {
+        console.warn('Pointer selection:', e.message)
+      }
+
+      // ── HAND TRACKING ──────────────────────────────────────────────────
       try {
         const fm = this.xrHelper.baseExperience.featuresManager
         fm.enableFeature(BABYLON.WebXRFeatureName.HAND_TRACKING, 'latest', {
@@ -52,22 +67,23 @@ export class XRManager {
         })
         console.log('✅ Hand tracking ativado')
         this._setupHandTracking()
-      } catch {
-        console.log('Hand tracking indisponível — usando controladores')
-        this._setupControllers()
+      } catch (e) {
+        console.log('Hand tracking indisponível:', e.message)
       }
 
-      // Teleporte
+      // ── CONTROLADORES ──────────────────────────────────────────────────
+      this._setupControllers()
+
+      // ── TELEPORTE ──────────────────────────────────────────────────────
       try {
         this.xrHelper.baseExperience.featuresManager.enableFeature(
           BABYLON.WebXRFeatureName.TELEPORTATION, 'stable', {
-            xrInput:    this.xrHelper.input,
-            floorMeshes: [],
+            xrInput: this.xrHelper.input, floorMeshes: []
           }
         )
       } catch {}
 
-      // Entrar/sair do VR
+      // ── ESTADO VR ──────────────────────────────────────────────────────
       this.xrHelper.baseExperience.onStateChangedObservable.add(state => {
         if (state === BABYLON.WebXRState.IN_XR) {
           this.inXR = true
@@ -79,142 +95,239 @@ export class XRManager {
         }
       })
 
-      console.log('✅ WebXR inicializado')
+      console.log('✅ WebXR v5 inicializado')
     } catch (e) {
       console.error('Erro WebXR:', e)
     }
   }
 
-  // ── ETAPA C — Hand tracking completo ─────────────────────────────────────
+  // ── HAND TRACKING ────────────────────────────────────────────────────────
   _setupHandTracking() {
     this.xrHelper.input.onControllerAddedObservable.add(ctrl => {
       if (!ctrl.inputSource?.hand) return
+      const hand = ctrl.inputSource.handedness
 
-      const hand = ctrl.inputSource.handedness  // 'left' | 'right'
       let pinchActive = false
-      let grabKey     = null
-      let grabOffset  = null
+      let frames      = 0
 
       this.scene.registerBeforeRender(() => {
+        if (!this.inXR) return
         const joints = ctrl.inputSource?.hand
         if (!joints) return
 
-        const thumbTip = joints.get('thumb-tip')
-        const indexTip = joints.get('index-finger-tip')
-        if (!thumbTip || !indexTip) return
+        const thumb = joints.get('thumb-tip')
+        const index = joints.get('index-finger-tip')
+        if (!thumb || !index) return
 
-        const tp = this._jointPos(thumbTip)
-        const ip = this._jointPos(indexTip)
+        const tp   = this._jPos(thumb)
+        const ip   = this._jPos(index)
         if (!tp || !ip) return
 
         const dist   = BABYLON.Vector3.Distance(tp, ip)
         const center = BABYLON.Vector3.Lerp(tp, ip, 0.5)
 
-        // ── Pinch detectado ──
-        if (!pinchActive && dist < PINCH_ON) {
-          pinchActive = true
-
-          // 1. Verificar se pinch está em painel VR
-          const panelHit = this._raycastPanels(center)
-          if (panelHit) {
-            // O GUI do Babylon processa automaticamente via pointer events
-            return
-          }
-
-          // 2. Verificar se pinch está em peça da bomba
-          const meshHit = this._nearestMesh(center, 0.12)
-          if (meshHit) {
-            grabKey = meshHit.metadata?.partKey
-            const node = window._app?.pumpModel?.parts?.[grabKey]
-            if (node) {
-              grabOffset = center.subtract(node.position)
-              this.interaction.select(grabKey)
-              // Mostrar info no painel VR
-              this.vrUI?.showPartInfoVR(grabKey)
-            }
+        // Pinch ON
+        if (!pinchActive && dist < 0.025) {
+          frames++
+          if (frames >= 2) {
+            pinchActive = true
+            frames      = 0
+            hand === 'left'
+              ? (this._pinchL = true, this._onPinchLeft())
+              : (this._pinchR = true, this._onPinchRight(center))
           }
         }
 
-        // ── Pinch solto ──
-        if (pinchActive && dist > PINCH_OFF) {
+        // Pinch OFF
+        if (pinchActive && dist > 0.055) {
           pinchActive = false
-          if (grabKey) {
-            const snapped = this.assembly.trySnap(grabKey)
-            if (snapped) this.interaction.flashSnap(grabKey)
-            this.interaction.deselect()
-            grabKey = null
-            grabOffset = null
-          }
+          frames      = 0
+          hand === 'left'
+            ? (this._pinchL = false)
+            : (this._pinchR = false, this._onRelease(center))
         }
 
-        // ── Arrastar peça ──
-        if (pinchActive && grabKey && grabOffset) {
-          const node = window._app?.pumpModel?.parts?.[grabKey]
-          if (node) node.position = center.subtract(grabOffset)
+        // Arrastar peça (mão direita)
+        if (pinchActive && hand === 'right' && this._grabState.key) {
+          const node = window._app?.pumpModel?.parts?.[this._grabState.key]
+          if (node && this._grabState.offset) {
+            node.position = center.subtract(this._grabState.offset)
+          }
         }
       })
     })
   }
 
-  // ── Controladores físicos (fallback) ──────────────────────────────────────
+  _onPinchLeft() {
+    // Dois pinches = reset
+    if (this._pinchR) { this.assembly.reset(); this._toast('↺ Reset!'); return }
+    // Pinch esquerdo = toggle explodir/montar
+    if (this.assembly.isExploded) {
+      this.assembly.montar(true)
+      this._toast('🔩 Montando...')
+    } else {
+      this.assembly.explodir(true)
+      this._toast('💥 Explodindo...')
+    }
+  }
+
+  _onPinchRight(center) {
+    // Dois pinches = reset
+    if (this._pinchL) { this.assembly.reset(); this._toast('↺ Reset!'); return }
+    // Tentar pegar peça
+    const hit = this._nearestMesh(center, 0.15)
+    if (hit?.metadata?.partKey) {
+      const key  = hit.metadata.partKey
+      const node = window._app?.pumpModel?.parts?.[key]
+      if (node) {
+        this._grabState = { key, offset: center.subtract(node.position), hand: 'right' }
+        this.interaction.select(key)
+        this.vrUI?.showPartInfoVR(key)
+        this._toast('✋ ' + (window._app?.pumpModel?.meta?.[key]?.label || key))
+      }
+    }
+  }
+
+  _onRelease(center) {
+    if (!this._grabState.key) return
+    const snapped = this.assembly.trySnap(this._grabState.key)
+    if (snapped) {
+      this.interaction.flashSnap(this._grabState.key)
+      this._toast('✅ Encaixado!')
+    }
+    this.interaction.deselect()
+    this._grabState = { key: null, offset: null, hand: null }
+  }
+
+  // ── CONTROLADORES FÍSICOS ────────────────────────────────────────────────
   _setupControllers() {
     this.xrHelper.input.onControllerAddedObservable.add(ctrl => {
+      if (ctrl.inputSource?.hand) return  // ignorar mãos aqui
+
       ctrl.onMotionControllerInitObservable.add(mc => {
+        const hand = mc.handedness
+
+        // TRIGGER → pegar peça (pointer selection já cuida dos botões GUI)
         const trigger = mc.getComponent('xr-standard-trigger')
-        if (!trigger) return
-        let grabKey = null
+        if (trigger) {
+          let grabKey    = null
+          let grabOffset = null
 
-        trigger.onButtonStateChangedObservable.add(comp => {
-          if (comp.pressed) {
-            // Raycast da mão
-            const ray = new BABYLON.Ray(
-              BABYLON.Vector3.Zero(),
-              BABYLON.Vector3.Forward()
-            )
-            ctrl.getWorldPointerRayToRef(ray)
-            const pick = this.scene.pickWithRay(ray, m => m.isPickable)
-
-            if (pick?.hit) {
-              const key = pick.pickedMesh?.metadata?.partKey
-              if (key) {
-                grabKey = key
-                this.interaction.select(key)
-                this.vrUI?.showPartInfoVR(key)
+          trigger.onButtonStateChangedObservable.add(comp => {
+            if (comp.pressed) {
+              // Raycast para peças
+              const ray = new BABYLON.Ray(BABYLON.Vector3.Zero(), BABYLON.Vector3.Forward())
+              ctrl.getWorldPointerRayToRef(ray)
+              const pick = this.scene.pickWithRay(ray,
+                m => m.isPickable && m.metadata?.partKey && m.isEnabled()
+              )
+              if (pick?.hit && pick.pickedMesh?.metadata?.partKey) {
+                grabKey = pick.pickedMesh.metadata.partKey
+                const node = window._app?.pumpModel?.parts?.[grabKey]
+                if (node) {
+                  const ctrlPos = ctrl.pointer?.position || ctrl.grip?.position
+                  if (ctrlPos) grabOffset = ctrlPos.subtract(node.position)
+                }
+                this.interaction.select(grabKey)
+                this.vrUI?.showPartInfoVR(grabKey)
+              }
+            } else {
+              if (grabKey) {
+                const snapped = this.assembly.trySnap(grabKey)
+                if (snapped) {
+                  this.interaction.flashSnap(grabKey)
+                  this._toast('✅ Encaixado!')
+                }
+                this.interaction.deselect()
+                grabKey = null; grabOffset = null
               }
             }
-          } else {
-            if (grabKey) {
-              const snapped = this.assembly.trySnap(grabKey)
-              if (snapped) this.interaction.flashSnap(grabKey)
-              this.interaction.deselect()
-              grabKey = null
-            }
-          }
-        })
+          })
 
-        // Botão A/X — explodir/montar toggle
-        const btnA = mc.getComponent('a-button') || mc.getComponent('x-button')
-        if (btnA) {
-          btnA.onButtonStateChangedObservable.add(comp => {
-            if (!comp.pressed) return
-            if (this.assembly.isExploded) this.assembly.montar(true)
-            else this.assembly.explodir(true)
+          // Mover peça com trigger pressionado
+          this.scene.registerBeforeRender(() => {
+            if (!grabKey || !grabOffset) return
+            const node    = window._app?.pumpModel?.parts?.[grabKey]
+            const ctrlPos = ctrl.pointer?.position || ctrl.grip?.position
+            if (node && ctrlPos) node.position = ctrlPos.subtract(grabOffset)
           })
         }
 
-        // Botão B/Y — próximo passo guiado
-        const btnB = mc.getComponent('b-button') || mc.getComponent('y-button')
-        if (btnB) {
-          btnB.onButtonStateChangedObservable.add(comp => {
-            if (comp.pressed) this.assembly.guidedAdvance()
+        // BOTÃO A (direito) / X (esquerdo) → explodir/montar
+        const btnAX = mc.getComponent('a-button') || mc.getComponent('x-button')
+        if (btnAX) {
+          btnAX.onButtonStateChangedObservable.add(comp => {
+            if (!comp.pressed) return
+            if (this.assembly.isExploded) {
+              this.assembly.montar(true)
+              this._toast('🔩 Montando...')
+            } else {
+              this.assembly.explodir(true)
+              this._toast('💥 Explodindo...')
+            }
+          })
+        }
+
+        // BOTÃO B (direito) / Y (esquerdo) → próximo passo
+        const btnBY = mc.getComponent('b-button') || mc.getComponent('y-button')
+        if (btnBY) {
+          btnBY.onButtonStateChangedObservable.add(comp => {
+            if (!comp.pressed) return
+            this.assembly.guidedAdvance()
+            this._toast('📋 Próximo passo')
+          })
+        }
+
+        // ANALÓGICO esquerdo pressionado → toggle menu
+        const stick = mc.getComponent('xr-standard-thumbstick')
+        if (stick && hand === 'left') {
+          stick.onButtonStateChangedObservable.add(comp => {
+            if (!comp.pressed) return
+            const main = this.vrUI?._panels?.mainPlane
+            if (main) main.setEnabled(!main.isEnabled())
+            this._toast('📋 Menu')
+          })
+        }
+
+        // GRIP → mover objetos com grip
+        const grip = mc.getComponent('xr-standard-squeeze')
+        if (grip) {
+          let grabKey = null; let grabOffset = null
+          grip.onButtonStateChangedObservable.add(comp => {
+            if (comp.pressed) {
+              const ray = new BABYLON.Ray(BABYLON.Vector3.Zero(), BABYLON.Vector3.Forward())
+              ctrl.getWorldPointerRayToRef(ray)
+              const pick = this.scene.pickWithRay(ray,
+                m => m.isPickable && m.metadata?.partKey && m.isEnabled()
+              )
+              if (pick?.hit) {
+                grabKey = pick.pickedMesh.metadata.partKey
+                const node    = window._app?.pumpModel?.parts?.[grabKey]
+                const ctrlPos = ctrl.grip?.position || ctrl.pointer?.position
+                if (node && ctrlPos) grabOffset = ctrlPos.subtract(node.position)
+                this.interaction.select(grabKey)
+              }
+            } else {
+              if (grabKey) {
+                this.assembly.trySnap(grabKey)
+                this.interaction.deselect()
+                grabKey = null; grabOffset = null
+              }
+            }
+          })
+          this.scene.registerBeforeRender(() => {
+            if (!grabKey || !grabOffset) return
+            const node    = window._app?.pumpModel?.parts?.[grabKey]
+            const ctrlPos = ctrl.grip?.position || ctrl.pointer?.position
+            if (node && ctrlPos) node.position = ctrlPos.subtract(grabOffset)
           })
         }
       })
     })
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  _jointPos(joint) {
+  // ── HELPERS ──────────────────────────────────────────────────────────────
+  _jPos(joint) {
     try {
       const frame = this.xrHelper.baseExperience.sessionManager.currentFrame
       const pose  = frame?.getJointPose?.(
@@ -228,20 +341,22 @@ export class XRManager {
   }
 
   _nearestMesh(pos, radius) {
-    return this.scene.meshes
-      .filter(m => m.isPickable && m.metadata?.partKey && m.isEnabled())
-      .find(m => BABYLON.Vector3.Distance(pos, m.getAbsolutePosition()) < radius)
-      ?? null
+    let best = null, bestDist = radius
+    for (const m of this.scene.meshes) {
+      if (!m.isPickable || !m.metadata?.partKey || !m.isEnabled()) continue
+      const d = BABYLON.Vector3.Distance(pos, m.getAbsolutePosition())
+      if (d < bestDist) { best = m; bestDist = d }
+    }
+    return best
   }
 
-  _raycastPanels(pos) {
-    // Verificar se a posição está próxima de um painel VR
-    const panels = ['vr_main', 'vr_info', 'vr_step', 'vr_toolbar']
-    return panels.some(name => {
-      const mesh = this.scene.getMeshByName(name)
-      if (!mesh || !mesh.isEnabled()) return false
-      return BABYLON.Vector3.Distance(pos, mesh.getAbsolutePosition()) < 0.30
-    })
+  _toast(msg) {
+    const el = document.getElementById('toast')
+    if (!el) return
+    el.textContent = msg
+    el.className   = 'toast toast-info visible'
+    clearTimeout(this._toastTimer)
+    this._toastTimer = setTimeout(() => el.classList.remove('visible'), 2000)
   }
 
   _showDesktopWarning() {

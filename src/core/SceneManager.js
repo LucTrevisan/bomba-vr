@@ -14,14 +14,24 @@ export class SceneManager {
   }
 
   async init() {
-    // ── Engine ──────────────────────────────────────────────────────────────
+    // ── Engine com suporte WebXR nativo ─────────────────────────────────────
+    // Verificar suporte WebGL2 (necessário para Quest)
+    const gl = this.canvas.getContext('webgl2') ||
+               this.canvas.getContext('webgl')
+    if (!gl) {
+      console.error('WebGL não suportado neste dispositivo')
+      throw new Error('WebGL not supported')
+    }
+
     this.engine = new BABYLON.Engine(this.canvas, true, {
       preserveDrawingBuffer: true,
-      stencil:      true,
-      antialias:    false,  // desativado para performance
-      xrCompatible: true,
+      stencil:               true,
+      antialias:             false,
+      xrCompatible:          true,   // obrigatório para Quest
+      disableWebGL2Support:  false,  // forçar WebGL2 quando disponível
+      failIfMajorPerformanceCaveat: false,  // não falhar em dispositivos lentos
     })
-    // Limitar FPS para economizar CPU/GPU no desktop
+
     this.engine.setHardwareScalingLevel(1.0)
 
     // ── Cena ────────────────────────────────────────────────────────────────
@@ -63,66 +73,123 @@ export class SceneManager {
   }
 
   async _setup360() {
-    // Esfera invertida — câmera fica dentro olhando para a textura interna
+    const base    = import.meta.env.BASE_URL
+    const hdrFile = base + 'assets/ambiente360.hdr'
+    const jpgFile = base + 'assets/ambiente360.jpg'
+
+    // Tentar HDRI primeiro (alta qualidade + reflexos PBR)
+    // Se não existir, usar JPG como fallback
+    const fileToLoad = await this._fileExists(hdrFile) ? hdrFile : jpgFile
+    const isHDR      = fileToLoad.endsWith('.hdr')
+
+    console.log(`🌐 Carregando ambiente: ${isHDR ? 'HDRI alta qualidade' : 'JPG'}`)
+
+    if (isHDR) {
+      await this._setup360HDR(fileToLoad)
+    } else {
+      await this._setup360JPG(fileToLoad)
+    }
+  }
+
+  async _fileExists(url) {
+    try {
+      const r = await fetch(url, { method: 'HEAD' })
+      return r.ok
+    } catch { return false }
+  }
+
+  async _setup360HDR(url) {
+    return new Promise((resolve) => {
+      try {
+        // HDRCubeTexture para arquivos .hdr equiretangulares do Poly Haven
+        // size=512: qualidade boa sem impacto de performance no Quest
+        const hdrTex = new BABYLON.HDRCubeTexture(
+          url,
+          this.scene,
+          512,        // tamanho do cubemap gerado
+          false,      // noMipmap
+          true,       // generateHarmonics
+          false,      // gammaSpace
+          false,      // reserved
+          () => {
+            // Usar como environment para reflexos PBR
+            this.scene.environmentTexture   = hdrTex
+            this.scene.environmentIntensity = 0.8
+
+            // Criar skybox visível a partir do HDR
+            const skybox = this.scene.createDefaultSkybox(
+              hdrTex,
+              true,   // pbr
+              1000,   // scale
+              0.0     // blur
+            )
+            if (skybox) {
+              skybox.isPickable       = false
+              skybox.renderingGroupId = 0
+              this._sky = skybox
+            }
+
+            console.log('✅ HDRI carregado — ambiente de alta qualidade ativo')
+            resolve()
+          },
+          (err) => {
+            console.warn('⚠️ HDRI falhou:', err, '— usando JPG')
+            this._setup360JPG(
+              import.meta.env.BASE_URL + 'assets/ambiente360.jpg'
+            ).then(resolve)
+          }
+        )
+      } catch (e) {
+        console.warn('⚠️ HDRCubeTexture não suportado:', e.message)
+        this._setup360JPG(
+          import.meta.env.BASE_URL + 'assets/ambiente360.jpg'
+        ).then(resolve)
+      }
+    })
+  }
+
+  async _setup360JPG(url) {
     const sphere = BABYLON.MeshBuilder.CreateSphere('sky360', {
-      diameter:        1000,   // grande o suficiente — infiniteDistance garante câmera sempre dentro
-      segments:        64,   // mais segmentos = panorama mais suave
+      diameter:        1000,
+      segments:        64,
       sideOrientation: BABYLON.Mesh.BACKSIDE,
     }, this.scene)
 
     sphere.isPickable       = false
-    sphere.infiniteDistance = true   // segue a câmera — sempre visível
-    sphere.renderingGroupId = 0      // renderiza antes de tudo
+    sphere.infiniteDistance = true
+    sphere.renderingGroupId = 0
     sphere.position         = BABYLON.Vector3.Zero()
 
     const mat = new BABYLON.StandardMaterial('sky360mat', this.scene)
     mat.disableLighting = true
     mat.backFaceCulling = false
     mat.fogEnabled      = false
+    mat.emissiveColor   = new BABYLON.Color3(0.04, 0.06, 0.10)
+    sphere.material     = mat
+    this._sky           = sphere
 
-    // Cor de fallback enquanto a textura carrega
-    mat.emissiveColor = new BABYLON.Color3(0.04, 0.06, 0.10)
-    sphere.material   = mat
-    this._sky         = sphere
-    this._skyMat      = mat
-
-    // Carregar textura — mesmo método do teste360.html que funcionou
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
-        console.warn('⚠️ Foto 360° timeout — usando fundo escuro')
+        console.warn('⚠️ JPG 360° timeout')
         resolve()
       }, 12000)
 
       const tex = new BABYLON.Texture(
-        import.meta.env.BASE_URL + 'assets/ambiente360.jpg',
-        this.scene,
-        false,   // noMipmap
-        false,   // invertY = false para equiretangular
-        BABYLON.Texture.TRILINEAR_SAMPLINGMODE, // melhor qualidade que BILINEAR
+        url, this.scene, false, false,
+        BABYLON.Texture.TRILINEAR_SAMPLINGMODE,
         () => {
-          // ── onLoad ──────────────────────────────────────────────────────
           clearTimeout(timeout)
-          tex.uScale =  1   // sem inversão — imagem já está na orientação correta
-          tex.vScale =  1
+          tex.uScale = 1
+          tex.vScale = 1
           tex.wrapU  = BABYLON.Texture.WRAP_ADDRESSMODE
           tex.wrapV  = BABYLON.Texture.CLAMP_ADDRESSMODE
-
-          // Usar TANTO diffuse QUANTO emissive — garante visibilidade
           mat.diffuseTexture  = tex
           mat.emissiveTexture = tex
           mat.emissiveColor   = BABYLON.Color3.White()
-
-          console.log('✅ Ambiente 360° carregado — 2000x1000px')
-
+          console.log('✅ JPG 360° carregado')
           resolve()
         },
-        (msg) => {
-          // ── onError ─────────────────────────────────────────────────────
-          clearTimeout(timeout)
-          console.warn('⚠️ Foto 360° falhou:', msg)
-          // Mantém cor de fallback escura
-          resolve()
-        }
+        () => { clearTimeout(timeout); resolve() }
       )
     })
   }
