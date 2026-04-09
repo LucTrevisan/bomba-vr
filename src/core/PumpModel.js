@@ -26,7 +26,7 @@ export class PumpModel {
 
     // Criar nó raiz para agrupar toda a bomba
     this.rootNode = new BABYLON.TransformNode('bomba_root', this.scene)
-    this.rootNode.position = new BABYLON.Vector3(0, -0.04, 0)
+    this.rootNode.position = new BABYLON.Vector3(0, 0.0, 0)
     // Rotação: -90° em X coloca a bomba na horizontal (eixo ao longo de Z)
     // Inventor: eixo da bomba em X, exportado com Z=up pelo FreeCAD
     // X:-90 corrige Z-up→Y-up, Y:+90 gira para ficar de frente
@@ -34,7 +34,7 @@ export class PumpModel {
     // X:-90° converte Z-up → Y-up (fica horizontal)
     // Escala 3x para proporção correta no ambiente 360°
     this.rootNode.rotation = new BABYLON.Vector3(0, 0, 0)
-    this.rootNode.scaling  = new BABYLON.Vector3(4, 4, 4)
+    this.rootNode.scaling  = new BABYLON.Vector3(2, 2, 2)
 
     // Tentar carregar GLB
     try {
@@ -311,7 +311,7 @@ export class PumpModel {
     console.log('✅ Cores aplicadas: carcaça verde, motor azul')
   }
 
-  _storeOrigins() {
+  _storeOrigins() {  // também chamado pelo AssemblyManager como fallback
     Object.entries(this.parts).forEach(([k, n]) => {
       this.originPos[k] = n.position.clone()
       this.originRot[k] = n.rotation ? n.rotation.clone() : new BABYLON.Vector3(0,0,0)

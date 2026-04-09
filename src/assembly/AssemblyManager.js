@@ -177,11 +177,23 @@ export class AssemblyManager {
   // ── Vista explodida ──────────────────────────────────────────────────────
   async explodir(animated = true) {
     this.isExploded = true
+
+    // Garantir que as origens estão disponíveis
+    const nOrigens = Object.keys(this.pumpModel.originPos).length
+    if (nOrigens === 0) {
+      console.warn('⚠️ originPos vazio — recalculando origens')
+      this.pumpModel._storeOrigins()
+    }
+
     const promises  = []
     Object.entries(this.pumpModel.parts).forEach(([key, node]) => {
       const off    = EXPLODE[key] ?? new BABYLON.Vector3(0, 0.5, 0)
       const origin = this.pumpModel.originPos[key]
-      if (!origin) return
+      if (!origin) {
+        // Usar posição atual como origem e registrar
+        this.pumpModel.originPos[key] = node.position.clone()
+        return
+      }
       const target = new BABYLON.Vector3(
         origin.x + off.x,
         origin.y + off.y,

@@ -46,8 +46,9 @@ export class TourManager {
       this._ativo = true
       console.log(`✅ Tour ativado — ${this._pontos.length} pontos`)
 
-      // Carregar primeiro ponto
-      await this._irParaPonto(0)
+      // NÃO carregar o primeiro ponto durante init
+      // O ambiente360.jpg padrão já está carregado
+      // Tour só muda a foto quando o usuário navegar
 
       // Criar setas de navegação
       this._criarSetas()
